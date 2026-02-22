@@ -36,8 +36,13 @@ export const Dashboard = () => {
 
   const handleCreateEvent = async () => {
     if (!user) return;
-    const newEvent = await api.createEvent(user.id, { title: 'Untitled Event' });
-    navigate(`/events/${newEvent.id}/edit`);
+    try {
+      const newEvent = await api.createEvent(user.id, { title: 'Untitled Event' });
+      navigate(`/events/${newEvent.id}/edit`);
+    } catch (err: any) {
+      console.error("Dashboard: Failed to create event", err);
+      alert(`Failed to create event: ${err.message || 'Unknown error'}`);
+    }
   };
 
   const handleCopyLink = (e: React.MouseEvent, eventId: string) => {

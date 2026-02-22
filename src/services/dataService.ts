@@ -138,14 +138,27 @@ export const getEventById = async (eventId: string): Promise<EventData | null> =
 };
 
 export const createEvent = async (userId: string, data: Partial<EventData>): Promise<EventData> => {
-  const res = await fetch(`${API_URL}/events`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('Failed to create event');
-  const e = await res.json();
-  return mapEvent(e);
+  console.log('DEBUG: createEvent payload:', data);
+  try {
+    const res = await fetch(`${API_URL}/events`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('DEBUG: createEvent error response:', res.status, errorText);
+      throw new Error(`Failed to create event: ${res.status} ${errorText}`);
+    }
+
+    const e = await res.json();
+    console.log('DEBUG: createEvent success:', e);
+    return mapEvent(e);
+  } catch (error) {
+    console.error('DEBUG: createEvent exception:', error);
+    throw error;
+  }
 };
 
 export const updateEvent = async (eventId: string, updates: Partial<EventData>): Promise<EventData> => {
