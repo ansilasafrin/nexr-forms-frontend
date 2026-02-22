@@ -35,7 +35,7 @@ const getBaseUrl = () => {
 };
 
 // 2. Set the single constant that the rest of your app uses
-const API_URL = getBaseUrl();
+export const API_URL = getBaseUrl();
 
 // 3. Log it so you can verify in the browser console
 console.log('EventFlow Configured API URL:', API_URL);

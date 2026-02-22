@@ -1,17 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, Search, Check, X } from 'lucide-react';
-import { useAuth } from '../../../../lib/auth';
 import * as api from '../../../../services/dataService';
+import useSWR from 'swr';
 import { EventData, Registration } from '../../../../types';
 import { Button, Card } from '../../../../components/UI';
 
 export const EventResponses = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [event, setEvent] = useState<EventData | null>(null);
-    const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+
+    const { data: event, isLoading: eventLoading } = useSWR(
+        id ? [`/events`, id] : null,
+        () => api.getEventById(id!)
+    );
+
+    const { data: registrations, isLoading: regsLoading, mutate: mutateRegs } = useSWR(
+        id ? [`/events/registrations`, id] : null,
+        () => api.getEventRegistrations(id!)
+    );
+
+    const loading = eventLoading || regsLoading;
 
     const getImageUrl = (path: string) => {
         if (!path) return '';
@@ -44,15 +54,8 @@ export const EventResponses = () => {
         return strVal;
     };
 
-    useEffect(() => {
-        if (id) {
-            api.getEventById(id).then(setEvent);
-            api.getEventRegistrations(id).then(setRegistrations);
-        }
-    }, [id]);
-
     const handleExport = () => {
-        if (!event || registrations.length === 0) return;
+        if (!event || !registrations || registrations.length === 0) return;
 
         // Simple CSV Export Logic
         const headers = ['Submitted At', ...event.fields.map(f => f.label)];
@@ -75,18 +78,16 @@ export const EventResponses = () => {
         link.click();
     };
 
-    const filteredRegistrations = registrations.filter(reg => {
+    const filteredRegistrations = registrations?.filter(reg => {
         const allValues = Object.values(reg.answers).join(' ').toLowerCase();
         return allValues.includes(searchTerm.toLowerCase());
-    });
+    }) || [];
 
     const handleApprove = async (regId: string) => {
         if (!event) return;
         try {
             await api.approveRegistration(event.id, regId);
-            setRegistrations(prev => prev.map(r =>
-                r.id === regId ? { ...r, verified: true, paymentStatus: 'paid' } : r
-            ));
+            mutateRegs(); // Revalidate SWR cache
         } catch (e) {
             alert('Failed to approve');
         }
@@ -97,9 +98,7 @@ export const EventResponses = () => {
         if (!confirm('Are you sure you want to reject this payment?')) return;
         try {
             await api.rejectRegistration(event.id, regId);
-            setRegistrations(prev => prev.map(r =>
-                r.id === regId ? { ...r, verified: false, paymentStatus: 'failed' } : r
-            ));
+            mutateRegs(); // Revalidate SWR cache
         } catch (e) {
             alert('Failed to reject');
         }

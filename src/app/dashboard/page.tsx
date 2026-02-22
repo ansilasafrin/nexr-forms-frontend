@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Plus, Users, Layout, LogOut, Loader2, ExternalLink, Link as LinkIcon, Copy } from 'lucide-react';
+import { Calendar, Plus, Users, Layout, LogOut, Loader2, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import * as api from '../../services/dataService';
+import useSWR from 'swr';
 import { EventData, DashboardStats } from '../../types';
 import { Card, Button, Badge } from '../../components/UI';
-
 const StatCard = ({ title, value, icon: Icon }: any) => (
   <Card className="p-6 relative overflow-hidden group hover:bg-white/5 transition-colors">
     <div className="relative z-10 flex flex-col h-full justify-between">
@@ -21,28 +21,18 @@ const StatCard = ({ title, value, icon: Icon }: any) => (
 export const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [events, setEvents] = useState<EventData[]>([]);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) return;
-    const loadData = async () => {
-      try {
-        const [eventData, statsData] = await Promise.all([
-          api.getEvents(user.id),
-          api.getDashboardStats(user.id)
-        ]);
-        setEvents(eventData);
-        setStats(statsData);
-      } catch (error) {
-        console.error("Failed to load dashboard", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [user]);
+  const { data: events, error: eventsError, isLoading: eventsLoading } = useSWR(
+    user ? ['/events', user.id] : null,
+    () => api.getEvents(user!.id)
+  );
+
+  const { data: stats, error: statsError, isLoading: statsLoading } = useSWR(
+    user ? ['/stats', user.id] : null,
+    () => api.getDashboardStats(user!.id)
+  );
+
+  const loading = eventsLoading || statsLoading;
 
   const handleCreateEvent = async () => {
     if (!user) return;
@@ -118,7 +108,7 @@ export const Dashboard = () => {
         {/* Event List */}
         <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-6">Your Events</h2>
 
-        {events.length === 0 ? (
+        {(!events || events.length === 0) ? (
           <Card className="text-center py-24 border-dashed border-2 border-zinc-800 bg-transparent hover:border-zinc-700 transition-colors cursor-pointer" onClick={handleCreateEvent}>
             <div className="mx-auto w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mb-6">
               <Plus className="h-6 w-6 text-zinc-500" />
@@ -128,7 +118,7 @@ export const Dashboard = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {events.map((event) => (
+            {events.map((event: EventData) => (
               <Card key={event.id} className="group relative overflow-hidden transition-all duration-300 hover:bg-zinc-900/60">
                 <div className="px-6 py-6">
                   <div className="flex items-start justify-between mb-6">

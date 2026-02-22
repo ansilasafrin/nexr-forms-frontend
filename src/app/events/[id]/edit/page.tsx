@@ -180,7 +180,7 @@ export const EventBuilder = () => {
 
     try {
       const token = localStorage.getItem('eventflow_token');
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+      const baseUrl = api.API_URL;
       const response = await fetch(`${baseUrl}/uploads`, {
         method: 'POST',
         headers: {
@@ -218,7 +218,7 @@ export const EventBuilder = () => {
 
   if (!event) return <div className="p-8 text-white">Loading...</div>;
 
-  const publicUrl = `${window.location.origin}/e/${event.id}`;
+  const publicUrl = `${window.location.origin}/forms/${event.id}/view`;
 
   return (
     <div className="min-h-screen flex flex-col bg-black">
@@ -246,16 +246,17 @@ export const EventBuilder = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="secondary" onClick={() => setActiveTab('preview')} icon={Eye} className="hidden sm:flex">Preview</Button>
-            <Button variant="secondary" onClick={handleSave} disabled={saving} icon={Save}>
-              {saving ? 'Saving...' : 'Save'}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Button variant="secondary" onClick={() => setActiveTab('preview')} icon={Eye} className="hidden xs:flex">Preview</Button>
+            <Button variant="secondary" onClick={handleSave} disabled={saving} icon={Save} className="flex-1 sm:flex-none">
+              {saving ? '...' : 'Save'}
             </Button>
             <Button
               variant={event.status === EventStatus.PUBLISHED ? 'danger' : 'primary'}
               onClick={handlePublish}
+              className="flex-1 sm:flex-none"
             >
-              {event.status === EventStatus.PUBLISHED ? 'Close Event' : 'Publish'}
+              {event.status === EventStatus.PUBLISHED ? (window.innerWidth < 640 ? 'Close' : 'Close Event') : 'Publish'}
             </Button>
           </div>
         </div>
@@ -308,8 +309,8 @@ export const EventBuilder = () => {
         )}
 
         {activeTab === 'settings' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="md:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="lg:col-span-2 space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-medium text-white mb-6">Basic Information</h3>
                 <Input
