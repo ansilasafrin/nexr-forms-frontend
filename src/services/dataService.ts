@@ -26,19 +26,22 @@ const getApiUrl = () => {
 // Force the new backend URL regardless of what 'url' says
 // 1. Unified URL Logic
 const getBaseUrl = () => {
-  // Use local backend if running in development mode
-  if (import.meta.env.DEV) {
-    return 'http://127.0.0.1:8000/api';
+  const envUrl = import.meta.env.VITE_API_URL;
+  let url = envUrl || (import.meta.env.DEV ? 'http://127.0.0.1:8010' : 'https://nexr-forms-backend.vercel.app');
+
+  // Strip trailing slashes
+  url = url.replace(/\/$/, '');
+
+  // Ensure it ends with /api
+  if (!url.endsWith('/api')) {
+    url += '/api';
   }
-  // Use Vercel backend for production
-  return 'https://nexr-forms-backend.vercel.app/api';
+
+  return url;
 };
 
-// 2. Set the single constant that the rest of your app uses
 export const API_URL = getBaseUrl();
-
-// 3. Log it so you can verify in the browser console
-console.log('EventFlow Configured API URL:', API_URL);
+console.log('EventFlow API URL:', API_URL);
 
 // 4. Headers configuration
 const getHeaders = () => {
@@ -131,16 +134,33 @@ export const getOrganizerEvent = async (eventId: string): Promise<EventData | nu
 };
 
 export const getEventById = async (eventId: string): Promise<EventData | null> => {
-  const res = await fetch(`${API_URL}/public/events/${eventId}`);
-  if (!res.ok) return null;
-  const e = await res.json();
-  return mapEvent(e);
+  const url = `${API_URL}/public/events/${eventId}`;
+  console.log('dataService: Fetching public event from:', url);
+  try {
+    // DO NOT use getHeaders() here to avoid sending stale/expired tokens
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) {
+      console.error(`dataService: Public fetch failed with status ${res.status} for ID:`, eventId);
+      return null;
+    }
+    const e = await res.json();
+    console.log('dataService: Successfully fetched public event:', e.title);
+    return mapEvent(e);
+  } catch (err) {
+    console.error('dataService: Exception during public fetch:', err);
+    return null;
+  }
 };
 
 export const createEvent = async (userId: string, data: Partial<EventData>): Promise<EventData> => {
+  const url = `${API_URL}/events`;
+  console.log('DEBUG: createEvent fetching:', url);
   console.log('DEBUG: createEvent payload:', data);
   try {
-    const res = await fetch(`${API_URL}/events`, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)

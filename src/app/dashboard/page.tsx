@@ -47,14 +47,14 @@ export const Dashboard = () => {
 
   const handleCopyLink = (e: React.MouseEvent, eventId: string) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/e/${eventId}`;
+    const url = `${window.location.origin}/events/${eventId}`;
     navigator.clipboard.writeText(url);
     alert("Link copied to clipboard!");
   };
 
   const handleShareLink = async (e: React.MouseEvent, eventId: string, title: string) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/e/${eventId}`;
+    const url = `${window.location.origin}/events/${eventId}`;
     if (navigator.share) {
       try {
         await navigator.share({ title, url });
@@ -151,7 +151,7 @@ export const Dashboard = () => {
                       </span>
                     </div>
                     <div className="flex w-full sm:w-auto space-x-2">
-                      <Button variant="ghost" onClick={() => window.open(`/e/${event.id}`, '_blank')} className="flex-1 sm:flex-none text-xs hover:bg-white text-zinc-400 hover:text-black justify-center">
+                      <Button variant="ghost" onClick={() => window.open(`/events/${event.id}`, '_blank')} className="flex-1 sm:flex-none text-xs hover:bg-white text-zinc-400 hover:text-black justify-center">
                         <ExternalLink className="w-3 h-3 mr-1" /> View Public
                       </Button>
                       <Button variant="secondary" onClick={() => navigate(`/events/${event.id}/responses`)} className="flex-1 sm:flex-none text-xs px-3 py-1 justify-center">

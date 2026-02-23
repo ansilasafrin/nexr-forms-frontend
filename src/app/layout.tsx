@@ -34,6 +34,7 @@ const RootLayout = () => {
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/e/:id" element={<PublicEvent />} />
+            <Route path="/events/:id" element={<PublicEvent />} />
 
             {/* Protected Organizer Routes */}
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
